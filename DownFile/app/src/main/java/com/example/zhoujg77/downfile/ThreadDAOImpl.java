@@ -3,6 +3,7 @@ package com.example.zhoujg77.downfile;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +21,18 @@ public class ThreadDAOImpl implements ThreadDAO {
 
     @Override
     public void insertThread(ThreadInfo threadInfo) {
+
         SQLiteDatabase db = mHelper.getWritableDatabase();
-        db.execSQL("INSERT INTO thread_info (thread_id,url,start,end,finished) values(?,?,?,?,?)",new Object[]{
+        db.execSQL("insert into thread_info (thread_id,url,start,end,finished) values(?,?,?,?,?)",new Object[]{
                 threadInfo.getId(),threadInfo.getUrl(),threadInfo.getStart(),threadInfo.getEnd(),threadInfo.getFinished()
         });
+        Log.i("--zhoujg77", "threadInfo.getId()"+threadInfo.getId());
+        Log.i("--zhoujg77", "threadInfo.getId()"+threadInfo.getUrl());
+        Log.i("--zhoujg77", "threadInfo.getId()"+threadInfo.getStart());
+        Log.i("--zhoujg77", "threadInfo.getId()"+threadInfo.getEnd());
+        Log.i("--zhoujg77", "threadInfo.getId()"+threadInfo.getFinished());
+
+
         db.close();
 
     }
@@ -41,7 +50,12 @@ public class ThreadDAOImpl implements ThreadDAO {
     @Override
     public void updateThread(String url, int thread_id, int finished) {
         SQLiteDatabase db = mHelper.getWritableDatabase();
-        db.execSQL("UPDATE thread_info SET finished  = ? WHERE URL = ? AND thread_id = ?",new Object[]{finished,url,thread_id});
+        db.execSQL("update thread_info set finished  = ? where url = ? and thread_id = ?",new Object[]{finished,url,thread_id});
+        Log.i("--zhoujg77", "thread_id:"+thread_id);
+        Log.i("--zhoujg77", "url:"+url);
+        Log.i("--zhoujg77", "finished:"+finished);
+        Log.i("--zhoujg77", "updateThread");
+
         db.close();
     }
 

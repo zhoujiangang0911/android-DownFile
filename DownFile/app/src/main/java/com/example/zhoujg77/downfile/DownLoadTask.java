@@ -2,6 +2,7 @@ package com.example.zhoujg77.downfile;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import org.apache.http.HttpStatus;
 
@@ -101,13 +102,15 @@ public class DownLoadTask {
                         }
                         //暂停时保存下载进度
                         if (isPause){
-                                dao.updateThread(fileInfo.getUrl(),fileInfo.getId(),finished);
+                            dao.updateThread(fileInfo.getUrl(),fileInfo.getId(),finished);
+                            Log.i("--zhoujg77", "暂停" );
                             return;
                         }
-                        //删除线程信息
-                        dao.deleteThread(threadInfo.getUrl(),threadInfo.getId());
+
 
                     }
+                    //删除线程信息
+                    dao.deleteThread(threadInfo.getUrl(),threadInfo.getId());
                 }
 
             } catch (Exception e) {

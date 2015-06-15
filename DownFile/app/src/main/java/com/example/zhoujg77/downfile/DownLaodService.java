@@ -39,7 +39,7 @@ public class DownLaodService extends Service {
             FileInfo fileInfo = (FileInfo) intent.getSerializableExtra("fileInfo");
             Log.i("--zhoujg77","start"+fileInfo.toString());
 
-            //启动线程
+            //初始化线程
             new InitThread(fileInfo).start();
 
         }else if (ACTION_STOP.equals(intent.getAction())){
@@ -49,8 +49,6 @@ public class DownLaodService extends Service {
                 mTask.isPause = true;
             }
         }
-
-
         return super.onStartCommand(intent, flags, startId);
     }
 
