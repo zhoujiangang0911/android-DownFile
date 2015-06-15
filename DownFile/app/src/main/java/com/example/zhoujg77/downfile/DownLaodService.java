@@ -26,12 +26,12 @@ import java.util.RandomAccess;
 public class DownLaodService extends Service {
     public static final String ACTION_START = "ACTION_START";
     public static final String ACTION_STOP = "ACTION_STOP";
-
+    public static final String ACTION_UPDATE= "ACTION_UPDATE";
     public static final String DOWNLOAD_PATH = Environment.getExternalStorageDirectory().getAbsolutePath()+"/aaaaa/";
 
     public static final int MSG_INIT = 0;
 
-
+    private DownLoadTask mTask = null;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         //获得ACTIVITY传递的参数
@@ -45,6 +45,9 @@ public class DownLaodService extends Service {
         }else if (ACTION_STOP.equals(intent.getAction())){
             FileInfo fileInfo = (FileInfo) intent.getSerializableExtra("fileInfo");
             Log.i("--zhoujg77","stop"+fileInfo.toString());
+            if (mTask!=null){
+                mTask.isPause = true;
+            }
         }
 
 
@@ -65,6 +68,9 @@ public class DownLaodService extends Service {
                 case MSG_INIT:
                     FileInfo fileInfo = (FileInfo) msg.obj;
                     Log.i("--zhoujg77","Init"+fileInfo.toString());
+                    //启动下载任务
+                    mTask = new DownLoadTask(DownLaodService.this,fileInfo);
+                    mTask.downlaod();
                     break;
 
                 default:

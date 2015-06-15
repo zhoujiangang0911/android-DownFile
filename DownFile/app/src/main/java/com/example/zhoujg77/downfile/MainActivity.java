@@ -1,6 +1,9 @@
 package com.example.zhoujg77.downfile;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -10,6 +13,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import static com.example.zhoujg77.downfile.R.id.info;
 import static com.example.zhoujg77.downfile.R.id.tv_downfilename;
 
 public class MainActivity extends AppCompatActivity {
@@ -28,8 +32,9 @@ public class MainActivity extends AppCompatActivity {
         mStartButton = (Button) findViewById(R.id.bnt_start);
         mPauseButton = (Button) findViewById(R.id.btn_pause);
         mDownProgressBar = (ProgressBar) findViewById(R.id.myprogressbar);
+        mDownProgressBar.setMax(100);
         //常见文件信息对象
-        final FileInfo fileInfo = new FileInfo(0,"http://v1.mukewang.com/22e7a6e5-9542-4fd0-9932-981e280d55d9/H.mp4","穆课网视频",0,0);
+        final FileInfo fileInfo = new FileInfo(0,"http://www.imooc.com/mobile/imooc.apk","a.apk",0,0);
 
         mStartButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -51,8 +56,30 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
+        //注册广播接收器
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(DownLaodService.ACTION_UPDATE);
+        registerReceiver(mReceiver,filter);
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mReceiver);
+    }
+
+    /**
+     * 跟新UI
+     */
+    BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (DownLaodService.ACTION_UPDATE.equals(intent.getAction())) {
+                int finished = intent.getIntExtra("finished",0);
+                mDownProgressBar.setProgress(finished);
+            }
+        }
+    };
 
 
 }

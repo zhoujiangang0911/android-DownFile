@@ -45,7 +45,7 @@ public interface ThreadDAO {
      *
      * @return
      */
-    public boolean isExists(String url,int thread_id,int finished);
+    public boolean isExists(String url,int thread_id);
 
 
 
