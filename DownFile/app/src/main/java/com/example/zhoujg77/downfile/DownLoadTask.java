@@ -26,24 +26,37 @@ public class DownLoadTask {
     private ThreadDAO dao = null;
     private int finished = 0;
     public boolean isPause = false;
-    public DownLoadTask(Context mcontext, FileInfo fileInfo) {
+
+    private int mThreadCount = 1;
+
+
+
+
+    public DownLoadTask(Context mcontext, FileInfo fileInfo,int mThreadCount) {
         this.context = mcontext;
         this.fileInfo = fileInfo;
+        this.mThreadCount = mThreadCount;
         dao = new ThreadDAOImpl(mcontext);
     }
 
     public void downlaod(){
         //读取数据库的线程信息
         List<ThreadInfo> threadinfolist = dao.getThreads(fileInfo.getUrl());
-        ThreadInfo threadinfo = null; 
         if (threadinfolist.size() == 0) {
-            //初始化线程信息对象
-            threadinfo = new ThreadInfo(0,fileInfo.getUrl(),0,fileInfo.getLength(),0);
-        }else {
-            threadinfo = threadinfolist.get(0);
+            //获得每个线程下载长度
+            int lenght = fileInfo.getLength()/ mThreadCount;
+            for (int i = 0; i <mThreadCount;i++){
+                //创建线程信息
+                ThreadInfo threadinfo = new ThreadInfo(i,fileInfo.getUrl(),lenght*i,(i+1)*lenght-1,0);
+                if (i== mThreadCount-1){
+                    threadinfo.setEnd(fileInfo.getLength());
+                }
+                threadinfolist.add(threadinfo);
+
+            }
         }
-        //创建子线程进行下载
-        new DownLoadThread(threadinfo).start();
+        //启动
+
     }
 
     /**
