@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         //注册广播接收器
         IntentFilter filter = new IntentFilter();
         filter.addAction(DownLaodService.ACTION_UPDATE);
+        filter.addAction(DownLaodService.ACTION_FINISH);
         registerReceiver(mReceiver,filter);
     }
 
@@ -71,7 +73,13 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             if (DownLaodService.ACTION_UPDATE.equals(intent.getAction())) {
                 int finished = intent.getIntExtra("finished",0);
-
+                int id = intent.getIntExtra("id",0);
+                mAdapter.updateProgress(id,finished);
+            }else if (DownLaodService.ACTION_FINISH.equals(intent.getAction())){
+                //更新进度条
+                FileInfo fileInfo = (FileInfo) intent.getSerializableExtra("fileInfo");
+                mAdapter.updateProgress(fileInfo.getId(),0);
+                Toast.makeText(MainActivity.this,mFileList.get(fileInfo.getId()).getFilename()+"下载完毕",Toast.LENGTH_SHORT).show();
             }
         }
     };

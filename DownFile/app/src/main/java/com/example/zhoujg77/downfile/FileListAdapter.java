@@ -44,7 +44,7 @@ public class FileListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
            ViewHolder holder = null;
-
+        final FileInfo fileInfo = fileList.get(position);
         if (convertView == null){
             convertView = LayoutInflater.from(mContext).inflate(R.layout.list_item,null);
             holder = new ViewHolder();
@@ -52,36 +52,47 @@ public class FileListAdapter extends BaseAdapter {
             holder.btstart = (Button) convertView.findViewById(R.id.bnt_start);
             holder.btstop = (Button) convertView.findViewById(R.id.btn_pause);
             holder.pbFile = (ProgressBar) convertView.findViewById(R.id.myprogressbar);
-
+            holder.tv.setText(fileInfo.getFilename());
+            holder.pbFile.setMax(100);
+            holder.btstart.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(mContext,DownLaodService.class);
+                    intent.setAction(DownLaodService.ACTION_START);
+                    intent.putExtra("fileInfo",fileInfo);
+                    mContext.startService(intent);
+                }
+            });
+            holder.btstop.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(mContext,DownLaodService.class);
+                    intent.setAction(DownLaodService.ACTION_STOP);
+                    intent.putExtra("fileInfo",fileInfo);
+                    mContext.startService(intent);
+                }
+            });
             convertView.setTag(holder);
 
         }else{
             holder = (ViewHolder) convertView.getTag();
         }
-        final FileInfo fileInfo = fileList.get(position);
-        holder.tv.setText(fileInfo.getFilename());
-        holder.pbFile.setMax(100);
+
+
         holder.pbFile.setProgress(fileInfo.getFinished());
 
-        holder.btstart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(mContext,DownLaodService.class);
-                intent.setAction(DownLaodService.ACTION_START);
-                intent.putExtra("fileInfo",fileInfo);
-                mContext.startService(intent);
-            }
-        });
-        holder.btstop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(mContext,DownLaodService.class);
-                intent.setAction(DownLaodService.ACTION_STOP);
-                intent.putExtra("fileInfo",fileInfo);
-                mContext.startService(intent);
-            }
-        });
+
         return convertView;
+    }
+
+    /**
+     * 更新列表中的进度条
+     */
+
+    public void updateProgress(int id,int progress){
+        FileInfo fileInfo = fileList.get(id);
+        fileInfo.setFinished(progress);
+        notifyDataSetChanged();
     }
 
 

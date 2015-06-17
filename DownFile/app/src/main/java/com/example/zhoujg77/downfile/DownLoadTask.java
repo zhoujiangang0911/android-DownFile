@@ -13,8 +13,12 @@ import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.RandomAccess;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 下载任务类
@@ -29,6 +33,9 @@ public class DownLoadTask {
 
     private int mThreadCount = 1;
 
+    private List<DownLoadThread> mThreadList = null;
+
+    public static ExecutorService sExecutorService = Executors.newCachedThreadPool();//线程池
 
 
 
@@ -52,12 +59,50 @@ public class DownLoadTask {
                     threadinfo.setEnd(fileInfo.getLength());
                 }
                 threadinfolist.add(threadinfo);
+                //向数据库插入信息
+                dao.insertThread(threadinfo);
 
             }
         }
-        //启动
+        //启动多线程进行下载
+        mThreadList = new ArrayList<>();
+
+        for (ThreadInfo info : threadinfolist){
+                DownLoadThread thread  = new DownLoadThread(info);
+                //thread.start();
+                DownLoadTask.sExecutorService.execute(thread);
+                //添加线程到集合中
+                mThreadList.add(thread);
+        }
+
 
     }
+
+    /**
+     * 判断所有线程都执行完毕
+     */
+    private   synchronized  void checkAllThreadsFinished(){
+        boolean allFinished  = true;
+            //遍历线程集合，判断线程是否执行完毕
+        for (DownLoadThread thread : mThreadList){
+            if (!thread.isFinished){
+                allFinished = false;
+                break;
+            }
+        }
+        if (allFinished){
+            //删除线程信息
+            dao.deleteThread(fileInfo.getUrl());
+            //发送广播通知UI现在完成
+            Intent intent = new Intent(DownLaodService.ACTION_FINISH);
+            intent.putExtra("fileInfo",fileInfo);
+            context.sendBroadcast(intent);
+
+        }
+
+
+    }
+
 
     /**
      * 下载线程
@@ -65,6 +110,7 @@ public class DownLoadTask {
 
     class DownLoadThread extends  Thread{
         private ThreadInfo threadInfo = null;
+        public boolean isFinished = false; //线程是否执行完毕
 
         public DownLoadThread(ThreadInfo threadInfo) {
             this.threadInfo = threadInfo;
@@ -73,10 +119,7 @@ public class DownLoadTask {
 
         @Override
         public void run() {
-            //向数据库插入信息
-            if (!dao.isExists(threadInfo.getUrl(), threadInfo.getId())) {
-                dao.insertThread(threadInfo);
-            }
+
             HttpURLConnection connection = null;
             RandomAccessFile raf = null;
             InputStream input = null;
@@ -105,25 +148,31 @@ public class DownLoadTask {
                         //写入文件
                         raf.write(buffer,0,len);
 
-                        // 把下载进度发送广播给Activity
+                        // 把下载进度发送广播给Activity累加整个文件
                         finished += len;
-                        if (System.currentTimeMillis() - time > 500) {
+                        //累加每个线程完成的进度
+                        threadInfo.setFinished(threadInfo.getFinished()+len);
+                        if (System.currentTimeMillis() - time > 1000) {
                             time  = System.currentTimeMillis();
                             intent.putExtra("finished",finished*100/fileInfo.getLength());
+                            intent.putExtra("id",fileInfo.getId());
                             context.sendBroadcast(intent);
 
                         }
                         //暂停时保存下载进度
                         if (isPause){
-                            dao.updateThread(fileInfo.getUrl(),fileInfo.getId(),finished);
+                            dao.updateThread(fileInfo.getUrl(),fileInfo.getId(),threadInfo.getFinished());
                             Log.i("--zhoujg77", "暂停" );
                             return;
                         }
 
 
                     }
-                    //删除线程信息
-                    dao.deleteThread(threadInfo.getUrl(),threadInfo.getId());
+                    //标识线程执行完毕
+                    isFinished = true;
+
+                    //检查线程是否执行完毕
+                    checkAllThreadsFinished();
                 }
 
             } catch (Exception e) {
@@ -137,14 +186,7 @@ public class DownLoadTask {
                     e.printStackTrace();
                 }
 
-
             }
-
-
-
-
-
-
         }
     }
 }

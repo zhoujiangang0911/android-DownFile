@@ -17,6 +17,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.RandomAccess;
 
@@ -27,11 +30,15 @@ public class DownLaodService extends Service {
     public static final String ACTION_START = "ACTION_START";
     public static final String ACTION_STOP = "ACTION_STOP";
     public static final String ACTION_UPDATE= "ACTION_UPDATE";
+
+    public static final String ACTION_FINISH= "ACTION_FINISH";
     public static final String DOWNLOAD_PATH = Environment.getExternalStorageDirectory().getAbsolutePath()+"/aaaaa/";
 
     public static final int MSG_INIT = 0;
 
-    private DownLoadTask mTask = null;
+    //下载任务的集合
+    private Map<Integer,DownLoadTask> mTasks = new LinkedHashMap<>();
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         //获得ACTIVITY传递的参数
@@ -40,14 +47,19 @@ public class DownLaodService extends Service {
             Log.i("--zhoujg77","start"+fileInfo.toString());
 
             //初始化线程
-            new InitThread(fileInfo).start();
 
+            DownLoadTask.sExecutorService.execute(new InitThread(fileInfo));
         }else if (ACTION_STOP.equals(intent.getAction())){
             FileInfo fileInfo = (FileInfo) intent.getSerializableExtra("fileInfo");
             Log.i("--zhoujg77","stop"+fileInfo.toString());
-            if (mTask!=null){
-                mTask.isPause = true;
+            //从集合中取出下载任务
+            DownLoadTask task = mTasks.get(fileInfo.getId());
+            if (task != null){
+                //停止下载任务
+                task.isPause = true;
             }
+
+
         }
         return super.onStartCommand(intent, flags, startId);
     }
@@ -67,8 +79,10 @@ public class DownLaodService extends Service {
                     FileInfo fileInfo = (FileInfo) msg.obj;
                     Log.i("--zhoujg77","Init"+fileInfo.toString());
                     //启动下载任务
-                    mTask = new DownLoadTask(DownLaodService.this,fileInfo);
-                    mTask.downlaod();
+                  DownLoadTask task   = new DownLoadTask(DownLaodService.this,fileInfo,3);
+                    task.downlaod();
+                    //把下载任务添加到集合中
+                    mTasks.put(fileInfo.getId(),task);
                     break;
 
                 default:

@@ -16,10 +16,28 @@ public class DBHelper extends SQLiteOpenHelper {
             "thread_id INTEGER ,url TEXT,start INTEGER,end INTEGER,finished INTEGER)";
     private static final String SQL_DROP= "DROP TABLE IF EXISTS thread_info";
 
+    private static DBHelper dbHelper = null; //静态引用
 
-    public DBHelper(Context context) {
+    private  DBHelper(Context context) {
+
         super(context, DB_NAME, null, VERSION );
     }
+
+    /**
+     * 获得对象
+     * @param db
+     */
+
+    public  static DBHelper getInstance(Context context){
+        if (dbHelper==null){
+            dbHelper = new DBHelper(context);
+
+        }
+            return dbHelper;
+
+    }
+
+
 
     @Override
     public void onCreate(SQLiteDatabase db) {
